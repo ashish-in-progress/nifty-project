@@ -3,7 +3,6 @@ import yfinance as yf
 
 app = Flask(__name__)
 
-# Full list of NIFTY 50 tickers on Yahoo Finance
 tickers = [
     "ADANIENT.NS","ASIANPAINT.NS","AXISBANK.NS","BAJAJ-AUTO.NS","BAJFINANCE.NS",
     "BAJAJFINSV.NS","BPCL.NS","BRITANNIA.NS","CIPLA.NS","COALINDIA.NS",
@@ -22,20 +21,19 @@ def nifty_data():
     result = {}
     for t in tickers:
         try:
-            # Download latest 5-min data for today
-            data = yf.download(t, period="1d", interval="5m")
+            # Disable future warning by specifying auto_adjust explicitly
+            data = yf.download(t, period="1d", interval="5m", auto_adjust=False)
             if not data.empty:
                 last = data.iloc[-1]
-                # Calculate % change from previous candle
                 prev = data.iloc[-2] if len(data) > 1 else last
-                pct_change = ((last['Close'] - prev['Close']) / prev['Close']) * 100
-                
+                pct_change = ((last['Close'].iloc[0] - prev['Close'].iloc[0]) / prev['Close'].iloc[0]) * 100
+
                 result[t] = {
-                    'Open': float(last['Open']),
-                    'High': float(last['High']),
-                    'Low': float(last['Low']),
-                    'Close': float(last['Close']),
-                    'Volume': int(last['Volume']),
+                    'Open': float(last['Open'].iloc[0]),
+                    'High': float(last['High'].iloc[0]),
+                    'Low': float(last['Low'].iloc[0]),
+                    'Close': float(last['Close'].iloc[0]),
+                    'Volume': int(last['Volume'].iloc[0]),
                     'PctChange': round(pct_change, 2)
                 }
             else:
@@ -44,6 +42,5 @@ def nifty_data():
             result[t] = {'error': str(e)}
     return jsonify(result)
 
-# For local testing
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5500, debug=True)
